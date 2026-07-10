@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pick the Trip · Korea Nov 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+<style>
+  :root{
+    --ink:#0d0f14; --ink-2:#141821; --card:#171b24; --card-hi:#1d222e;
+    --line:#262d3a; --line-2:#323b4c;
+    --fg:#eef1f7; --fg-mut:#9aa3b4; --fg-dim:#6c7588;
+    --seoul:#ff3d8a; --gyeongju:#e8b13a; --busan:#2dd4bf; --jeju:#ff8a3d;
+    --gold:#ffd86b;
+    --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(255,61,138,.10), transparent 60%),
+      radial-gradient(1000px 500px at -10% 30%, rgba(45,212,191,.07), transparent 55%),
+      var(--ink);
+    color:var(--fg);font-family:"Inter",system-ui,sans-serif;line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding-bottom:120px;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 20px}
+
+  /* header */
+  header{position:sticky;top:0;z-index:40;background:rgba(13,15,20,.82);backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:14px;padding:11px 20px;max-width:var(--maxw);margin:0 auto}
+  .brand{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;color:var(--fg-mut);text-transform:uppercase;white-space:nowrap}
+  .brand b{color:var(--fg)}
+  .count{font-family:"Space Mono",monospace;font-size:12px;color:var(--ink);background:var(--fg);border-radius:100px;padding:4px 11px;font-weight:700;white-space:nowrap}
+  .count.zero{background:var(--line-2);color:var(--fg-mut)}
+  .bar-sp{flex:1}
+  .hbtn{font:inherit;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--fg);border:1px solid var(--line-2);border-radius:100px;padding:7px 14px;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s,background .15s;white-space:nowrap}
+  .hbtn:hover{border-color:var(--fg-mut)}
+  .hbtn.solid{background:var(--fg);color:var(--ink);border-color:var(--fg)}
+  .hbtn:focus-visible{outline:2px solid var(--busan);outline-offset:2px}
+
+  .rnav{display:flex;gap:8px;overflow-x:auto;padding:0 20px 10px;max-width:var(--maxw);margin:0 auto;scrollbar-width:none}
+  .rnav::-webkit-scrollbar{display:none}
+  .rnav a{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.06em;text-decoration:none;color:var(--fg-mut);border:1px solid var(--line);padding:6px 12px;border-radius:100px;white-space:nowrap;display:flex;gap:7px;align-items:center;transition:color .15s,border-color .15s}
+  .rnav a .ko{color:var(--fg-dim)}
+  .rnav a:hover{color:var(--fg)}
+  .rnav a .dot{width:7px;height:7px;border-radius:50%}
+
+  /* hero */
+  .hero{padding:54px 0 30px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:18px}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(40px,8vw,76px);line-height:.96;letter-spacing:-.02em;margin-bottom:18px}
+  h1 .pop{background:linear-gradient(100deg,var(--seoul),var(--jeju) 55%,var(--gyeongju));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{max-width:580px;color:var(--fg-mut);font-size:17px}
+  .lede b{color:var(--fg);font-weight:600}
+  .lede .star{color:var(--gold)}
+  .index{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:34px}
+  .ix{text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px 14px;background:var(--ink-2);position:relative;overflow:hidden;transition:transform .18s,border-color .18s}
+  .ix:hover{transform:translateY(-3px)}
+  .ix .ko{font-family:"Bricolage Grotesque";font-size:26px;font-weight:600;line-height:1}
+  .ix .en{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-mut);margin-top:9px}
+  .ix .when{font-size:12px;color:var(--fg-dim);margin-top:2px}
+  .ix .uline{height:3px;border-radius:3px;margin-top:13px;width:34px}
+  .ix .ixn{position:absolute;top:14px;right:15px;font-family:"Space Mono",monospace;font-size:11px;color:var(--fg-dim)}
+  .ix .ixn b{color:var(--fg)}
+
+  /* filters */
+  .filters{position:sticky;top:103px;z-index:30;background:rgba(13,15,20,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .filters .wrap{display:flex;gap:8px;overflow-x:auto;padding:12px 20px;scrollbar-width:none;align-items:center}
+  .filters .wrap::-webkit-scrollbar{display:none}
+  .flabel{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-dim);margin-right:2px;white-space:nowrap}
+  .chip{font:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;background:transparent;color:var(--fg-mut);border:1px solid var(--line);border-radius:100px;padding:6px 13px;transition:.15s}
+  .chip:hover{color:var(--fg);border-color:var(--line-2)}
+  .chip[aria-pressed="true"]{background:var(--fg);color:var(--ink);border-color:var(--fg);font-weight:600}
+  .chip.must[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#2a2410}
+  .chip:focus-visible{outline:2px solid var(--busan);outline-offset:2px}
+
+  /* regions */
+  .region{padding:46px 0 8px;scroll-margin-top:160px}
+  .rhead{display:flex;align-items:flex-end;gap:16px;margin-bottom:6px;flex-wrap:wrap}
+  .rhead .ko{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(30px,5vw,46px);line-height:1;color:var(--rc)}
+  .rhead .en{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(30px,5vw,46px);line-height:1;letter-spacing:-.02em}
+  .rhead .pick-n{font-family:"Space Mono",monospace;font-size:12px;color:var(--fg-mut);border:1px solid var(--line);border-radius:100px;padding:4px 11px;margin-bottom:5px}
+  .rhead .pick-n b{color:var(--rc)}
+  .rsub{color:var(--fg-mut);font-size:14.5px;max-width:680px;margin:8px 0 24px;border-left:2px solid var(--rc);padding-left:14px}
+  .catgroup{margin-bottom:26px}
+  .cat-title{font-family:"Space Mono",monospace;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-dim);margin:0 0 12px;display:flex;align-items:center;gap:10px}
+  .cat-title::after{content:"";flex:1;height:1px;background:var(--line)}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-items:start}
+
+  /* option card */
+  .opt{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);transition:border-color .15s,background .15s}
+  .opt:hover{border-color:var(--line-2)}
+  .opt.picked{border-color:var(--rc);background:color-mix(in srgb,var(--rc) 11%,var(--card))}
+  .opt.open{border-color:var(--line-2)}
+  .opt-row{display:flex;align-items:flex-start;padding:14px}
+  .sel{flex:0 0 22px;width:22px;height:22px;margin-right:13px;margin-top:1px;cursor:pointer;border-radius:7px;border:1.5px solid var(--line-2);background:transparent;display:grid;place-items:center;transition:.18s;padding:0}
+  .sel svg{width:13px;height:13px;opacity:0;transform:scale(.5) rotate(-12deg);transition:.2s}
+  .sel:focus-visible{outline:2px solid var(--rc);outline-offset:2px}
+  .opt.picked .sel{background:var(--rc);border-color:var(--rc);transform:rotate(-6deg)}
+  .opt.picked .sel svg{opacity:1;transform:scale(1) rotate(0)}
+  .opt-main{flex:1;min-width:0;text-align:left;background:transparent;border:none;color:var(--fg);font:inherit;cursor:pointer;padding:0;display:block}
+  .opt-main:focus-visible{outline:2px solid var(--rc);outline-offset:3px;border-radius:6px}
+  .t{font-weight:600;font-size:15.5px;letter-spacing:-.01em;line-height:1.25;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .opt.picked .t{color:#fff}
+  .must{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.04em;color:var(--gold);background:rgba(255,216,107,.10);border:1px solid rgba(255,216,107,.32);border-radius:100px;padding:2px 8px;white-space:nowrap;font-weight:700}
+  .d{color:var(--fg-mut);font-size:13.5px;margin-top:5px;line-height:1.45}
+  .row-meta{display:flex;align-items:center;gap:12px;margin-top:9px}
+  .cost{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.05em}
+  .cost b{color:var(--rc)}
+  .cost span{color:var(--fg-dim)}
+  .chev{margin-left:auto;color:var(--fg-dim);font-size:13px;transition:transform .2s}
+  .opt.open .chev{transform:rotate(180deg)}
+
+  /* detail drawer */
+  .detail{display:none;padding:2px 16px 16px 49px}
+  .opt.open .detail{display:block;animation:fade .22s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .info{color:var(--fg-mut);font-size:13.7px;line-height:1.55}
+  .dfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:13px 0 0;flex-wrap:wrap}
+  .costline{font-size:12.5px;color:var(--fg-dim)}
+  .costline .cost{font-size:14px;margin-left:4px}
+  .costline small{color:var(--fg-dim)}
+  .tbtn{font-family:"Space Mono",monospace;font-size:12px;text-decoration:none;color:var(--fg);border:1px solid var(--line-2);border-radius:100px;padding:7px 13px;transition:.15s;white-space:nowrap}
+  .tbtn:hover{border-color:var(--rc);color:var(--rc)}
+  .lmap{height:200px;border-radius:11px;overflow:hidden;margin-top:13px;border:1px solid var(--line);background:#0c0e12}
+  .noloc{margin-top:13px;font-size:12.7px;color:var(--fg-dim);background:var(--ink);border:1px dashed var(--line-2);border-radius:11px;padding:12px 13px}
+  .map-fallback{height:100%;display:grid;place-items:center;text-align:center;color:var(--fg-dim);font-size:12.5px;padding:14px}
+  .map-fallback a{color:var(--busan)}
+  .leaflet-container{background:#0c0e12;font-family:inherit}
+  .leaflet-control-attribution{background:rgba(0,0,0,.55)!important;color:#7a8396!important;font-size:9.5px!important}
+  .leaflet-control-attribution a{color:#9bb6c8!important}
+  .leaflet-bar a{background:#1b2029;color:#cfd6e2;border-color:#2a3140}
+  .leaflet-bar a:hover{background:#242b36}
+  .leaflet-tooltip{background:#11151c;border:1px solid var(--line-2);color:var(--fg);font-size:11.5px;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  .leaflet-tooltip-top:before{border-top-color:var(--line-2)}
+
+  .empty-region{display:none;color:var(--fg-dim);font-size:14px;padding:8px 2px 22px;font-style:italic}
+
+  /* modal + toast */
+  .modal-bg{position:fixed;inset:0;z-index:60;background:rgba(6,8,12,.7);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--ink-2);border:1px solid var(--line-2);border-bottom:none;border-radius:18px 18px 0 0;width:100%;max-width:560px;padding:22px 22px 26px;animation:slideup .25s ease}
+  @keyframes slideup{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
+  .modal h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:23px;letter-spacing:-.01em}
+  .modal p{color:var(--fg-mut);font-size:13.5px;margin:6px 0 14px}
+  .modal textarea{width:100%;height:230px;resize:vertical;background:var(--ink);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:14px;font-family:"Space Mono",monospace;font-size:12.5px;line-height:1.7}
+  .modal-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .modal-actions .hbtn{flex:1;justify-content:center;padding:11px 14px}
+  .modal-x{float:right;background:none;border:none;color:var(--fg-mut);font-size:22px;cursor:pointer;line-height:1;margin-top:-2px}
+  .modal-x:hover{color:var(--fg)}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--fg);color:var(--ink);font-weight:600;font-size:13.5px;padding:11px 18px;border-radius:100px;z-index:70;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:26px 0 10px;color:var(--fg-dim);font-size:13px}
+  footer b{color:var(--fg-mut)}
+
+  @media (max-width:720px){
+    .index{grid-template-columns:repeat(2,1fr)}
+    .grid{grid-template-columns:1fr}
+    .filters{top:99px}
+    .region{scroll-margin-top:150px}
+    .hbtn .lbl{display:none}
+    .hbtn.solid .lbl{display:inline}
+    .brand .full{display:none}
+  }
+  @media (max-width:430px){.hero{padding:38px 0 26px}.index{gap:9px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="brand"><span class="full">PICK THE TRIP&nbsp;·&nbsp;</span><b>KOREA</b>&nbsp;NOV 2026</div>
+    <div class="bar-sp"></div>
+    <span class="count zero" id="count">0 picks</span>
+    <button class="hbtn" id="toggleSel" aria-pressed="false"><span class="lbl">Show picks</span></button>
+    <button class="hbtn solid" id="exportBtn">Export <span class="lbl">picks</span></button>
+  </div>
+  <nav class="rnav" id="rnav"></nav>
+</header>
+
+<div class="filters">
+  <div class="wrap" id="filterWrap"><span class="flabel">Filter</span></div>
+</div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">15 days · 5 of us · Nov 15–29, 2026</div>
+    <h1>Pick the <span class="pop">trip.</span></h1>
+    <p class="lede">A menu of everything we could do across the four stops. Tap the box to add something; tap the card to open details — <b>a map, cost, and a tickets link.</b> <span class="star">★</span> marks the generally-agreed must-sees (nice to see, no obligation to pick). Hit <b>Export</b> when we're done.</p>
+    <div class="index" id="index"></div>
+  </section>
+  <div id="regions"></div>
+  <footer>
+    Tap the box to collect · <span id="footCount"><b>0</b></span> picked. Selections save on this device; the live preview forgets them on refresh, but the downloaded file remembers. <b>Export</b> never loses anything. Cost bands ($–$$$$) are rough per-person estimates, not live prices.
+  </footer>
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Export picks">
+    <button class="modal-x" id="modalClose" aria-label="Close">×</button>
+    <h3>Our picks</h3>
+    <p>Copy this and paste it back into the chat — I'll sequence it into the day-by-day.</p>
+    <textarea id="exportText" readonly></textarea>
+    <div class="modal-actions">
+      <button class="hbtn solid" id="copyBtn">Copy to clipboard</button>
+      <button class="hbtn" id="closeBtn">Close</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast">Copied</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+const REGIONS=[
+  {id:"seoul",ko:"서울",en:"Seoul",when:"Nov 15–19 · 27–29",color:"var(--seoul)",hex:"#ff3d8a",
+   sub:"You're here twice — Hongdae/Hapjeong first (nightlife + youth energy), then Seongsu-dong (cafés, hip). Badges flag what's near each base."},
+  {id:"gyeongju",ko:"경주",en:"Gyeongju",when:"Nov 19–21",color:"var(--gyeongju)",hex:"#e8b13a",
+   sub:"Ancient Silla capital — an open-air museum of tombs and temples. Slower and atmospheric; your hanok sits beside the night-lit pond cluster."},
+  {id:"busan",ko:"부산",en:"Busan",when:"Nov 21–24",color:"var(--busan)",hex:"#2dd4bf",
+   sub:"Coastal and relaxed. Seomyeon base = the downtown food/nightlife core; the rest is beaches, hillside villages and a seaside temple."},
+  {id:"jeju",ko:"제주",en:"Jeju",when:"Nov 24–27",color:"var(--jeju)",hex:"#ff8a3d",
+   sub:"Volcanic island, you've got the Carnival. Based in Ara-dong (Jeju City side, not the coast) — cluster sights east vs. west by driving day. Peak tangerine season."}
+];
+const CATS=["Culture","Distinctive","Nightlife","Nature","Food","Roam"];
+
+// fields: r region · c category · t title · d tagline · m must-see · k ticketed(klook) · p cost 1-4 · i info · la/lo coords (omit = no fixed spot)
+const OPTIONS=[
+  // SEOUL
+  {r:"seoul",c:"Culture",t:"Gyeongbokgung Palace",d:"Grand main palace with the changing-of-the-guard; hanbok = free entry.",m:1,p:1,la:37.5796,lo:126.9770,i:"Korea's flagship palace (1395). Closed Tuesdays. Guard-changing runs ~10am & 2pm; renting hanbok nearby gets you in free and makes a fun group photo. Budget 1.5–2 hrs."},
+  {r:"seoul",c:"Culture",t:"Changdeokgung & Secret Garden",d:"UNESCO palace; the garden needs a separate timed tour.",m:1,k:1,p:1,la:37.5794,lo:126.9910,i:"The Huwon garden is accessible only on a timed guided tour with limited daily slots — reserve ahead, especially weekends. Closed Mondays. Often called the most beautiful of the palaces."},
+  {r:"seoul",c:"Culture",t:"Deoksugung Palace",d:"Smaller, central, lovely lit at dusk; do the stone-wall walk.",p:1,la:37.5658,lo:126.9751,i:"Open until 9pm — one of the few palaces nice after dark. Mix of Korean and Western-style halls, plus the Deoksugung-gil stone-wall walk. Closed Mondays."},
+  {r:"seoul",c:"Culture",t:"Jongmyo Shrine",d:"Quiet UNESCO royal shrine, pairs with Changdeokgung next door.",p:1,la:37.5743,lo:126.9940,i:"Confucian royal ancestral shrine. Weekdays are guided-tour only; Saturdays self-guided. Short (~45 min). Closed Tuesdays."},
+  {r:"seoul",c:"Culture",t:"Bukchon Hanok Village",d:"Photogenic lanes of traditional houses; go early, it's residential.",m:1,p:1,la:37.5826,lo:126.9830,i:"A living neighbourhood, not a museum — visit before ~5pm, keep voices down, stick to the marked photo alleys. Pairs naturally with Gyeongbokgung and Samcheong-dong cafés."},
+  {r:"seoul",c:"Culture",t:"National Museum of Korea",d:"Huge and free — the best one-stop on Korean history.",p:1,la:37.5238,lo:126.9804,i:"Free, enormous, excellent — give it 2–3 hrs. Closed Mondays. The contemplative Pensive Bodhisattva room is a highlight."},
+  {r:"seoul",c:"Culture",t:"War Memorial of Korea",d:"Strong Korean War museum with outdoor hardware. Free.",p:1,la:37.5371,lo:126.9776,i:"Free, with a big outdoor display of planes, tanks and ships plus thorough Korean War galleries. Closed Mondays."},
+  {r:"seoul",c:"Culture",t:"Seodaemun Prison History Hall",d:"Sobering colonial-era site; heavy but meaningful.",p:1,la:37.5745,lo:126.9560,i:"A preserved Japanese-colonial-era prison, now a moving history hall. Allow ~1 hr. Closed Mondays."},
+  {r:"seoul",c:"Culture",t:"Jogyesa Temple",d:"Central active temple, easy drop-in by Insadong.",p:1,la:37.5747,lo:126.9817,i:"Free, central, active — lantern displays are common. A quick stop between Insadong and Gyeongbokgung."},
+  {r:"seoul",c:"Culture",t:"Bongeunsa Temple",d:"Big temple facing COEX in Gangnam; old-meets-new.",p:1,la:37.5149,lo:127.0577,i:"Free 1,200-year-old temple opposite the COEX towers — the contrast is the point. Has a templestay/tea program if you want depth."},
+  {r:"seoul",c:"Distinctive",t:"DMZ / JSA Tour",d:"The North Korea border day trip; passports required.",m:1,k:1,p:4,la:37.9009,lo:126.7460,i:"Must be booked through an authorised operator (passport required); JSA tours sell out weeks ahead and have a dress code. Half-day DMZ or full-day DMZ+JSA. The trip's most unique experience."},
+  {r:"seoul",c:"Distinctive",t:"N Seoul Tower (Namsan)",d:"Cable car up for the city panorama; best at sunset.",m:1,k:1,p:2,la:37.5512,lo:126.9882,i:"Ride the Namsan cable car up; observatory ticket is extra. Sunset is the sweet spot. Base plaza and love-locks are free if you skip the deck."},
+  {r:"seoul",c:"Distinctive",t:"Lotte World Tower — Seoul Sky",d:"One of the world's tallest decks, with a glass floor.",k:1,p:3,la:37.5125,lo:127.1025,i:"Floors 117–123 of Korea's tallest building, with a glass-floor Sky Deck. Book a timed slot; clearer afternoons give the best views."},
+  {r:"seoul",c:"Distinctive",t:"Dongdaemun Design Plaza",d:"Zaha Hadid architecture with seasonal LED installs.",p:1,la:37.5669,lo:127.0095,i:"Zaha Hadid's curving landmark — free to wander outside and through most public halls. The LED 'rose garden' and night-market stalls are seasonal."},
+  {r:"seoul",c:"Distinctive",t:"Starfield Library (COEX)",d:"The giant photogenic library hall; free, pairs with Bongeunsa.",p:1,la:37.5096,lo:127.0596,i:"A free, soaring two-storey library inside the COEX mall — very photogenic. Pairs with Bongeunsa across the street."},
+  {r:"seoul",c:"Distinctive",t:"Cheonggyecheon Stream",d:"Restored downtown stream, nice lit night walk.",p:1,la:37.5696,lo:126.9785,i:"A restored stream threading downtown, lit at night — a flat walk you can drop into anytime. Start near Gwanghwamun."},
+  {r:"seoul",c:"Distinctive",t:"Jjimjilbang (Dragon Hill Spa)",d:"Classic Korean spa/sauna — great cold-day group hang.",k:1,p:2,la:37.5298,lo:126.9648,i:"Sprawling 24-hr jjimjilbang near Yongsan with themed sauna rooms, pools and food. Entry is cheap; some rooms cost extra. Bring an open mind about communal bathing."},
+  {r:"seoul",c:"Distinctive",t:"Noraebang (karaoke)",d:"Private-room karaoke; essential late-night group bonding.",p:1,i:"Private-room karaoke charged by the hour and split across the group — pennies each. 'Coin noraebang' versions let you pay per song. On every Hongdae block; best as a late-night chaser."},
+  {r:"seoul",c:"Distinctive",t:"Han River night hang",d:"Convenience-store ramyeon + beer by the river at night.",p:1,la:37.5285,lo:126.9320,i:"Grab ramyeon, beer and snacks from a riverside convenience store and sit out by the water. Yeouido and Banpo parks are the classics — bring a layer, Nov nights are cold."},
+  {r:"seoul",c:"Roam",t:"Seoul Forest",d:"Green stroll before diving into Seongsu's cafés.",p:1,la:37.5444,lo:127.0374,i:"A big park with deer enclosures and walking paths, ~10 min from your Seongsu base — an easy warm-up before the neighbourhood's cafés."},
+  {r:"seoul",c:"Roam",t:"Hongdae",d:"Buskers, indie shops, endless food and bars.",p:1,la:37.5563,lo:126.9236,i:"Your Part 1 base. University-district energy: buskers, indie boutiques and themed cafés by day; bars and clubs by night."},
+  {r:"seoul",c:"Roam",t:"Ikseon-dong",d:"Hanok alleys turned into cafés and boutiques.",p:1,la:37.5740,lo:126.9905,i:"A maze of 1920s hanok now full of tiny cafés, cocktail nooks and design shops. Best wandered slowly; busy at weekends."},
+  {r:"seoul",c:"Roam",t:"Insadong",d:"Traditional crafts, tea houses, art, souvenirs.",p:1,la:37.5740,lo:126.9849,i:"The traditional-crafts street: hanji paper, ceramics, tea houses and galleries. Ssamziegil's spiral mall is a fun browse."},
+  {r:"seoul",c:"Roam",t:"Myeongdong",d:"Skincare shopping plus a big evening street-food strip.",p:1,la:37.5637,lo:126.9849,i:"Cosmetics central plus a heaving evening street-food lane. Touristy but worth one pass-through; go after dark for the stalls."},
+  {r:"seoul",c:"Roam",t:"Seongsu-dong",d:"\"Brooklyn of Seoul\" — warehouses, design shops, top cafés.",p:1,la:37.5445,lo:127.0560,i:"Your Part 2 base — converted factories now full of flagship stores, roasteries and pop-ups. The 'Brooklyn of Seoul' tag is earned."},
+  {r:"seoul",c:"Roam",t:"Euljiro",d:"Industrial by day, hidden cocktail bars by night.",p:1,la:37.5663,lo:126.9910,i:"Hardware-district-by-day, speakeasy-by-night ('Hipjiro'). Look for unmarked doors and rooftop bars. Easy to combine with a Gwangjang Market dinner."},
+  {r:"seoul",c:"Roam",t:"Garosu-gil (Gangnam)",d:"Tree-lined upscale shopping street.",p:1,la:37.5205,lo:127.0230,i:"A ginkgo-lined Gangnam street of flagship stores and brunch spots — pleasant browse, pricier than Hongdae."},
+  {r:"seoul",c:"Food",t:"Gwangjang Market",d:"Iconic street-food market; bindaetteok and mayak gimbap.",m:1,p:1,la:37.5701,lo:127.0000,i:"One of Korea's oldest markets and a street-food legend — bindaetteok, mayak gimbap, raw beef. Go hungry and early-ish; cash helps."},
+  {r:"seoul",c:"Food",t:"Tongin Market",d:"Fill a brass lunchbox from stalls using tokens.",p:1,la:37.5800,lo:126.9700,i:"Buy brass coins at the info desk, then fill a vintage lunchbox from the stalls — a cheap, fun group lunch. Closed Mondays."},
+  {r:"seoul",c:"Food",t:"Mangwon Market",d:"Low-key local market for a casual street-food night.",p:1,la:37.5556,lo:126.9050,i:"A low-key local market near your Part 1 base — fried snacks, tteokbokki and produce. A relaxed alternative to the tourist markets."},
+  {r:"seoul",c:"Food",t:"Korean BBQ night",d:"Samgyeopsal + soju; everywhere in Hongdae and Seongsu.",p:2,i:"The essential group meal — pork belly and soju grilled at the table. Hongdae and Seongsu are packed with spots; ~₩15–30k a head."},
+  {r:"seoul",c:"Food",t:"Chimaek (chicken + beer)",d:"Fried chicken and beer; pairs with a river hang.",p:2,i:"Fried chicken + beer, Korea's perfect pairing. Great delivered to a Han River picnic or at a neighbourhood hof. Try a half-and-half (fried + soy-garlic)."},
+  {r:"seoul",c:"Nightlife",t:"Hongdae clubs & bars",d:"Your base is the nightlife district; club-night option.",k:1,p:3,la:37.5547,lo:126.9233,i:"Your base is the nightlife district — younger, energetic, cheaper than Gangnam. A club pass or pub-crawl hops several venues; weekends go late."},
+  {r:"seoul",c:"Nightlife",t:"Itaewon",d:"International bar/club mix, varied street to street.",p:3,la:37.5345,lo:126.9945,i:"The international quarter — craft beer, world food, and a bar/club scene that shifts character street to street."},
+  {r:"seoul",c:"Nightlife",t:"Gangnam clubs",d:"Bigger, glossier, pricier for one upscale night.",k:1,p:4,la:37.4979,lo:127.0276,i:"Bigger, glossier, pricier — table service and dress codes at marquee venues. Save it for one splashy night."},
+  {r:"seoul",c:"Nightlife",t:"Seongsu / Euljiro bars",d:"Lower-key cocktail and natural-wine spots for Part 2.",p:3,la:37.5445,lo:127.0560,i:"For Part 2: natural-wine bars, cocktail dens and listening rooms — hip rather than rowdy, ideal for a lower-key night."},
+
+  // GYEONGJU
+  {r:"gyeongju",c:"Culture",t:"Bulguksa Temple",d:"UNESCO masterpiece, one of Korea's most beautiful temples.",m:1,p:1,la:35.7901,lo:129.3320,i:"Korea's most celebrated temple (UNESCO, 8th c.) with the famous Dabotap and Seokgatap pagodas. A little outside town — plan a bus/taxi. Pairs with Seokguram up the hill."},
+  {r:"gyeongju",c:"Culture",t:"Seokguram Grotto",d:"UNESCO hillside Buddha above Bulguksa; pair the two.",m:1,p:1,la:35.7949,lo:129.3490,i:"A serene granite Buddha in a hilltop grotto above Bulguksa (UNESCO), viewed through glass. Short but special — combine the two in one trip."},
+  {r:"gyeongju",c:"Culture",t:"Daereungwon Tomb Complex",d:"Walk among royal mounds; enter the Cheonmachong tomb.",m:1,p:1,la:35.8345,lo:129.2120,i:"23 grassy royal burial mounds you stroll between; the Cheonmachong tomb is opened so you can see inside. Magic at dawn or under lights."},
+  {r:"gyeongju",c:"Culture",t:"Wolji Pond + Donggung Palace",d:"Night-lit reflecting pond and palace ruins — go after dark.",m:1,p:1,la:35.8348,lo:129.2265,i:"The signature Gyeongju shot — a reconstructed palace and pond, mirror-still and floodlit after dark. Five minutes from your hanok; go at night."},
+  {r:"gyeongju",c:"Culture",t:"Cheomseongdae",d:"7th-century stone observatory, lit at night in an open field.",m:1,p:1,la:35.8348,lo:129.2190,i:"The oldest surviving astronomical observatory in East Asia (7th c.), floodlit at night in an open field that's lovely in autumn. Quick stop in the night loop."},
+  {r:"gyeongju",c:"Culture",t:"Woljeonggyo Bridge",d:"Reconstructed wooden palace bridge, beautifully illuminated.",p:1,la:35.8295,lo:129.2170,i:"A grand reconstructed wooden palace bridge, beautifully lit after dark and free to cross. Part of the walkable night cluster."},
+  {r:"gyeongju",c:"Culture",t:"Gyeongju National Museum",d:"Silla gold crowns and the famous Emille Bell.",p:1,la:35.8312,lo:129.2270,i:"Free, and home to Silla gold crowns and the colossal Emille Bell. Compact and well-curated — ~1.5 hrs."},
+  {r:"gyeongju",c:"Culture",t:"Gyochon Traditional Village",d:"Hanok village, the Choi house, and Gyeongju bread.",p:1,la:35.8285,lo:129.2130,i:"A tidy hanok village with the historic Choi-clan house and Gyeongju 'ssal' bread to try; free to wander. Next to Woljeonggyo."},
+  {r:"gyeongju",c:"Culture",t:"Bunhwangsa Temple",d:"Oldest surviving stone pagoda in Korea; quiet stop.",p:1,la:35.8390,lo:129.2300,i:"Home to Korea's oldest surviving stone pagoda (634 AD). A quiet, quick stop for history buffs."},
+  {r:"gyeongju",c:"Roam",t:"Hwangnidan-gil",d:"Trendy café-and-boutique street by the tombs.",p:1,la:35.8370,lo:129.2120,i:"The trendy café-and-boutique strip beside the tombs — hanok-chic coffee, dessert and a little shopping. Where Gyeongju's young energy gathers; best for an afternoon or early evening."},
+  {r:"gyeongju",c:"Distinctive",t:"Night-illumination loop",d:"Wolji + Cheomseongdae + Woljeonggyo lit up, all on foot.",p:1,la:35.8340,lo:129.2230,i:"Do Wolji Pond, Cheomseongdae and Woljeonggyo as one floodlit evening walk — flat, free, and the most atmospheric hour in Gyeongju."},
+  {r:"gyeongju",c:"Nature",t:"Autumn foliage hunt",d:"Late-Nov tail end, but ginkgo roads can still deliver.",p:1,i:"Late November is the tail end, but the ginkgo-lined roads around Bomun Lake and the tomb park can still glow gold. A weather-dependent bonus."},
+
+  // BUSAN
+  {r:"busan",c:"Distinctive",t:"Gamcheon Culture Village",d:"Pastel hillside village of alleys and murals; Busan's icon.",m:1,p:1,la:35.0975,lo:129.0106,i:"A hillside of pastel houses, murals and tiny galleries — Busan's signature view. Free to roam; grab the stamp map and wear good shoes for the slopes."},
+  {r:"busan",c:"Distinctive",t:"Haedong Yonggungsa Temple",d:"Rare seaside temple on the rocks; out on the east coast.",m:1,p:1,la:35.1884,lo:129.2233,i:"A rare seaside temple built onto the rocks (most are in mountains) — dramatic with the waves. Free; east of the city, so pair with Haeundae."},
+  {r:"busan",c:"Distinctive",t:"Huinnyeoul Culture Village",d:"Cliffside \"Korea's Santorini\" with a coastal path.",p:1,la:35.0772,lo:129.0167,i:"A cliffside village over the harbour with a scenic walkway and cafés — 'Korea's Santorini'. Combine with the nearby Songdo cable car."},
+  {r:"busan",c:"Nature",t:"Taejongdae",d:"Dramatic coastal cliffs, lighthouse, and a park tram.",p:1,la:35.0531,lo:129.0870,i:"A forested cape with sea cliffs, a lighthouse and viewpoints; a danubi tram loops the park (small fee) if you'd rather not walk it all."},
+  {r:"busan",c:"Distinctive",t:"Oryukdo Skywalk",d:"Glass walkway over the sea at the cliffs.",p:1,la:35.1010,lo:129.1230,i:"A free horseshoe of glass jutting over the sea where the bay meets open water. Quick stop; pairs with the Igidae trail."},
+  {r:"busan",c:"Distinctive",t:"Songdo Marine Cable Car",d:"Over-the-water cable car with glass-floor cabins.",k:1,p:2,la:35.0758,lo:129.0156,i:"Glides over the bay with optional glass-floor 'crystal' cabins. Round-trip ticket; best on a clear day."},
+  {r:"busan",c:"Nightlife",t:"Gwangalli Beach",d:"Lit Gwangan Bridge across the water; bars and cafés.",m:1,p:1,la:35.1532,lo:129.1186,i:"The night winner — Gwangan Bridge lit across the water, a strip of bars and cafés behind, and occasional weekend drone shows. Free to sit out."},
+  {r:"busan",c:"Nature",t:"Haeundae Beach",d:"The famous beach, boardwalk, and the Blueline beach train.",m:1,p:1,la:35.1587,lo:129.1604,i:"Busan's famous beach with a long boardwalk; the Blueline Park beach train and sky capsule run the coast nearby (paid). Scenic even in winter."},
+  {r:"busan",c:"Nightlife",t:"The Bay 101",d:"Marina spot for the postcard Marine City skyline with drinks.",p:2,la:35.1545,lo:129.1480,i:"A marina bar-and-dining complex framing the postcard Marine City skyline — that glowing-towers reflection shot is here. Busiest after dark."},
+  {r:"busan",c:"Nature",t:"Igidae Coastal Walk",d:"Scenic cliff-side trail for a nature stretch.",p:1,la:35.1290,lo:129.1230,i:"A coastal cliff trail with suspension bridges and skyline views back toward the city — free, ~1–2 hrs. A good-weather option."},
+  {r:"busan",c:"Food",t:"Jagalchi Market",d:"Korea's largest seafood market; pick it, they cook it.",m:1,p:2,la:35.0967,lo:129.0306,i:"Korea's largest fish market — pick your seafood downstairs, have it cooked upstairs. Lively, pungent, very Busan. Cheaper at lunch."},
+  {r:"busan",c:"Food",t:"BIFF Square",d:"Film-festival district with a dense street-food strip.",p:1,la:35.0979,lo:129.0258,i:"The film-festival plaza, now a dense street-food run — the seed-stuffed ssiat hotteok is the thing to try. Free to browse."},
+  {r:"busan",c:"Food",t:"Gukje Market",d:"Sprawling traditional market for browsing and snacks.",p:1,la:35.1010,lo:129.0270,i:"A sprawling old-school market next to BIFF Square — household goods, vintage, and snack alleys. Good for a wander."},
+  {r:"busan",c:"Food",t:"Seomyeon eats",d:"BBQ and Busan's pork soup, dwaeji-gukbap.",p:2,la:35.1577,lo:129.0594,i:"Your base and Busan's biggest food-and-shopping hub. The local must is dwaeji-gukbap (pork-and-rice soup); BBQ and late-night spots abound."},
+  {r:"busan",c:"Distinctive",t:"Spa Land (Centum City)",d:"High-end jjimjilbang inside the huge Shinsegae store.",k:1,p:2,la:35.1690,lo:129.1290,i:"A premium jjimjilbang inside Shinsegae Centum City (the world's largest department store) — 20+ themed saunas. No overnight, but a perfect rainy-day reset. Time-limited entry."},
+  {r:"busan",c:"Distinctive",t:"Busan Tower / Yongdusan",d:"Central viewpoint over the city and harbor.",p:1,la:35.1010,lo:129.0320,i:"Yongdusan Park is free with harbour views; the tower observation deck costs a little extra. Central and quick, near the markets."},
+  {r:"busan",c:"Nightlife",t:"Seomyeon nightlife",d:"The main downtown bar/club district.",p:3,la:35.1577,lo:129.0594,i:"Your base doubles as the main downtown bar-and-club district — denser and cheaper than the beach scene. Gwangalli is the chiller alternative."},
+
+  // JEJU
+  {r:"jeju",c:"Nature",t:"Hallasan",d:"Korea's highest peak; long summit trails or shorter ones.",m:1,p:1,la:33.3617,lo:126.5292,i:"South Korea's highest peak (1,947 m). Seongpanak/Gwaneumsa summit trails are long (8–9 hrs) and need a free reservation plus winter traction in late Nov; Eorimok/Yeongsil are easier half-days. Free."},
+  {r:"jeju",c:"Nature",t:"Seongsan Ilchulbong",d:"UNESCO crater, east coast; short steep climb, sunrise option.",m:1,p:1,la:33.4587,lo:126.9426,i:"A dramatic UNESCO tuff cone with a short, steep crater climb (~30–40 min up). The classic sunrise spot if anyone's willing to rise early."},
+  {r:"jeju",c:"Nature",t:"Manjanggul Lava Tube",d:"UNESCO lava cave you walk through; pairs with Seongsan.",m:1,p:1,la:33.5285,lo:126.7706,i:"One of the world's finest lava tubes (UNESCO) — about 1 km is open to walk, cool and damp year-round. Pairs with Seongsan on an east-side day."},
+  {r:"jeju",c:"Nature",t:"Jusangjeolli Cliffs",d:"Hexagonal basalt columns hit by waves (southwest).",p:1,la:33.2378,lo:126.4263,i:"Cliffs of hexagonal basalt columns pounded by surf on the southwest coast — short boardwalk viewing. Best near high tide."},
+  {r:"jeju",c:"Nature",t:"Jeongbang Waterfall",d:"Falls straight into the sea at Seogwipo.",p:1,la:33.2447,lo:126.5740,i:"One of the few waterfalls in Asia that drops straight into the sea, at Seogwipo. Short walk down (and back up). Pairs with the southern coast."},
+  {r:"jeju",c:"Nature",t:"Seopjikoji",d:"Scenic coastal cape with lighthouse and cliffs (east).",p:1,la:33.4239,lo:126.9300,i:"A grassy coastal cape with a lighthouse, cliffs and film-famous scenery — free, breezy walks. Right by Seongsan on the east side."},
+  {r:"jeju",c:"Nature",t:"Sangumburi Crater",d:"Easy-access crater with silver grass, striking in late autumn.",p:1,la:33.4339,lo:126.6856,i:"An easily-reached volcanic crater ringed by silver grass (eulalia) that's striking in late autumn. Short, gentle paths; small fee."},
+  {r:"jeju",c:"Distinctive",t:"Udo Island",d:"Ferry to a small island; scooter the loop (windy in Nov).",p:2,la:33.5010,lo:126.9540,i:"A short ferry from Seongsan to a tiny island you loop by scooter or e-bike — beaches, peanut ice cream, big views. Check the ferry schedule and wind (blustery in Nov)."},
+  {r:"jeju",c:"Distinctive",t:"Haenyeo divers",d:"Watch the UNESCO women free-divers and eat fresh catch.",p:2,la:33.5274,lo:126.8500,i:"Jeju's UNESCO-listed women free-divers — catch a demonstration (e.g. near Seongsan or the Haenyeo Museum) and eat just-surfaced abalone and conch. A genuinely unique Jeju thing."},
+  {r:"jeju",c:"Distinctive",t:"O'sulloc Tea Museum",d:"Green-tea fields and museum on the west side.",p:1,la:33.3057,lo:126.2895,i:"Green-tea fields, a sleek tea museum and the Innisfree flagship on the west side — mostly free, with a café. A calm, pretty stop."},
+  {r:"jeju",c:"Distinctive",t:"Tangerine picking",d:"In peak season now — pick-your-own at orchards.",p:1,i:"Late November is peak citrus season — many farms offer pick-your-own hallabong/gamgyul for a small fee. Very Jeju, very seasonal; ask your stay for the nearest orchard."},
+  {r:"jeju",c:"Roam",t:"Aewol coastal cafés",d:"Famous oceanfront café strip; a drive, but a classic afternoon.",p:2,la:33.4630,lo:126.3100,i:"The famous oceanfront café strip on the west coast (Handam walk, Monsant, etc.) — a classic Jeju afternoon, but ~40 min from your Ara-dong base, so make it deliberate."},
+  {r:"jeju",c:"Distinctive",t:"Loveland (19+)",d:"Quirky adult sculpture park near the city; optional group humor.",p:2,la:33.4537,lo:126.4900,i:"A cheeky 19+ outdoor sculpture park near Jeju City — more giggly than risqué. A short, very-mid-20s detour if it suits the group's humour."},
+  {r:"jeju",c:"Food",t:"Dongmun Market",d:"Jeju City's main market; black pork, seafood, citrus.",p:2,la:33.5128,lo:126.5286,i:"Jeju City's main market near your base — black-pork skewers, fresh seafood, hallabong juice and tangerine everything. Lively into the evening."},
+  {r:"jeju",c:"Food",t:"Jeju black pork BBQ",d:"The island's signature meal on Black Pork Street.",m:1,p:3,la:33.5102,lo:126.5230,i:"The island's signature meal: heukdwaeji (black pork) grilled at the table, richer than mainland pork. 'Black Pork Street' in Jeju City is the go-to; ~₩25–35k a head."},
+  {r:"jeju",c:"Nature",t:"Yongduam Rock",d:"Dragon-head lava formation near the city; quick scenic stop.",p:1,la:33.5159,lo:126.5125,i:"A dragon-head lava formation on the coast a few minutes from your base — a quick, free scenic stop, nice at sunset with a seaside café walk."}
+];
+
+OPTIONS.forEach((o,i)=>o.id=o.r+"-"+i);
+const byId={}; OPTIONS.forEach(o=>byId[o.id]=o);
+const regionById={}; REGIONS.forEach(R=>regionById[R.id]=R);
+
+// state
+const KEY="korea-trip-picks-v1";
+let picked=new Set();
+try{const raw=localStorage.getItem(KEY);if(raw)picked=new Set(JSON.parse(raw));}catch(e){}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify([...picked]));}catch(e){}}
+let activeFilter="All", showPickedOnly=false;
+
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#0d0f14" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+function costHtml(p){let s='';for(let n=1;n<=4;n++)s+=n<=p?'<b>$</b>':'<span>$</span>';return s;}
+function linkFor(o,en){
+  if(o.k) return {url:"https://www.klook.com/en-US/search/?query="+encodeURIComponent(o.t+" "+en),label:"Find tickets ↗"};
+  return {url:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(o.t+" "+en+" South Korea"),label:"More info & map ↗"};
+}
+
+// hero index + nav
+const indexEl=document.getElementById("index"), rnavEl=document.getElementById("rnav");
+REGIONS.forEach(R=>{
+  const a=document.createElement("a");
+  a.href="#sec-"+R.id;a.className="ix";
+  a.innerHTML=`<div class="ixn"><b data-rcount="${R.id}">0</b>/${OPTIONS.filter(o=>o.r===R.id).length}</div>
+    <div class="ko" style="color:${R.color}">${R.ko}</div>
+    <div class="en">${R.en}</div><div class="when">${R.when}</div>
+    <div class="uline" style="background:${R.color}"></div>`;
+  indexEl.appendChild(a);
+  const n=document.createElement("a");n.href="#sec-"+R.id;
+  n.innerHTML=`<span class="dot" style="background:${R.color}"></span><span class="ko">${R.ko}</span> ${R.en}`;
+  rnavEl.appendChild(n);
+});
+
+// filter chips
+const fw=document.getElementById("filterWrap");
+const chipDefs=[{label:"All",val:"All"},{label:"★ Must-see",val:"Must"},...CATS.map(c=>({label:c,val:c}))];
+chipDefs.forEach(def=>{
+  const b=document.createElement("button");
+  b.className="chip"+(def.val==="Must"?" must":"");
+  b.textContent=def.label;b.setAttribute("aria-pressed",def.val==="All");
+  b.onclick=()=>{activeFilter=def.val;[...fw.querySelectorAll(".chip")].forEach(x=>x.setAttribute("aria-pressed",x===b));render();};
+  fw.appendChild(b);
+});
+
+// build regions
+const regionsEl=document.getElementById("regions");
+REGIONS.forEach(R=>{
+  const sec=document.createElement("section");
+  sec.className="region";sec.id="sec-"+R.id;sec.style.setProperty("--rc",R.color);
+  const opts=OPTIONS.filter(o=>o.r===R.id);
+  const cats=[...new Set(opts.map(o=>o.c))];
+  let html=`<div class="rhead"><span class="ko">${R.ko}</span><span class="en">${R.en}</span>
+      <span class="pick-n"><b data-rpick="${R.id}">0</b> / ${opts.length} picked</span></div>
+    <p class="rsub">${R.sub}</p>`;
+  cats.forEach(cat=>{
+    html+=`<div class="catgroup"><div class="cat-title">${cat}</div><div class="grid">`;
+    opts.filter(o=>o.c===cat).forEach(o=>{
+      const lk=linkFor(o,R.en);
+      const mapBlock=o.la?`<div class="lmap"></div>`:`<div class="noloc">No fixed spot — it's all over the place, so just slot it in whenever. (Button below still pulls up details.)</div>`;
+      html+=`<div class="opt" data-id="${o.id}" data-cat="${o.c}" data-must="${o.m?1:0}" data-loc="${o.la?1:0}">
+        <div class="opt-row">
+          <button class="sel" aria-pressed="false" aria-label="Add ${o.t.replace(/"/g,'')}">${CHECK}</button>
+          <button class="opt-main" aria-expanded="false">
+            <span class="t">${o.t}${o.m?'<span class="must">★ Must-see</span>':''}</span>
+            <span class="d">${o.d}</span>
+            <span class="row-meta"><span class="cost">${costHtml(o.p)}</span><span class="chev">⌄</span></span>
+          </button>
+        </div>
+        <div class="detail">
+          <p class="info">${o.i}</p>
+          <div class="dfoot">
+            <span class="costline">Est. spend <span class="cost">${costHtml(o.p)}</span> <small>· per person</small></span>
+            <a class="tbtn" href="${lk.url}" target="_blank" rel="noopener">${lk.label}</a>
+          </div>
+          ${mapBlock}
+        </div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  html+=`<div class="empty-region">Nothing in this filter here.</div>`;
+  sec.innerHTML=html;
+  regionsEl.appendChild(sec);
+});
+
+// interactions: select vs expand
+let openId=null, liveMap=null;
+regionsEl.addEventListener("click",e=>{
+  const sel=e.target.closest(".sel");
+  if(sel){
+    const opt=sel.closest(".opt");const id=opt.dataset.id;
+    if(picked.has(id))picked.delete(id);else picked.add(id);
+    persist();render();return;
+  }
+  const main=e.target.closest(".opt-main");
+  if(main){toggleDetail(main.closest(".opt"));}
+});
+
+function buildMap(container,o,R){
+  const located=OPTIONS.filter(x=>x.r===o.r&&x.la);
+  try{
+    if(typeof L==="undefined")throw new Error("noleaflet");
+    const map=L.map(container,{zoomControl:true,scrollWheelZoom:false,attributionControl:true});
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      {subdomains:"abcd",maxZoom:19,attribution:'© OpenStreetMap © CARTO'}).addTo(map);
+    const pts=[];
+    located.forEach(x=>{
+      const cur=x.id===o.id;
+      const mk=L.circleMarker([x.la,x.lo],{
+        radius:cur?9:5,color:cur?"#ffffff":R.hex,weight:cur?2.5:1,
+        fillColor:R.hex,fillOpacity:cur?1:.5,opacity:cur?1:.55
+      }).addTo(map);
+      mk.bindTooltip(x.t,{direction:"top",opacity:.96});
+      if(cur)mk.openTooltip();
+      pts.push([x.la,x.lo]);
+    });
+    if(pts.length)map.fitBounds(pts,{padding:[26,26],maxZoom:13});
+    setTimeout(()=>map.invalidateSize(),60);
+    return map;
+  }catch(err){
+    container.innerHTML=`<div class="map-fallback">Map needs a connection.<br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.t+" "+R.en+" South Korea")}" target="_blank" rel="noopener">Open in Google Maps ↗</a></div>`;
+    return null;
+  }
+}
+function closeDetail(){
+  if(!openId)return;
+  const prev=document.querySelector(".opt.open");
+  if(liveMap){try{liveMap.remove();}catch(e){}liveMap=null;}
+  if(prev){
+    prev.classList.remove("open");
+    prev.querySelector(".opt-main").setAttribute("aria-expanded","false");
+    const m=prev.querySelector(".lmap");
+    if(m){m.innerHTML="";m.classList.remove("leaflet-container");m._leaflet_id=null;}
+  }
+  openId=null;
+}
+function toggleDetail(opt){
+  const id=opt.dataset.id;
+  if(openId===id){closeDetail();return;}
+  if(openId)closeDetail();
+  opt.classList.add("open");
+  opt.querySelector(".opt-main").setAttribute("aria-expanded","true");
+  openId=id;
+  const o=byId[id];const m=opt.querySelector(".lmap");
+  if(m)liveMap=buildMap(m,o,regionById[o.r]);
+}
+
+// header toggles
+document.getElementById("toggleSel").addEventListener("click",e=>{
+  showPickedOnly=!showPickedOnly;
+  e.currentTarget.setAttribute("aria-pressed",showPickedOnly);
+  e.currentTarget.querySelector(".lbl").textContent=showPickedOnly?"Show all":"Show picks";
+  render();
+});
+
+function render(){
+  const total=picked.size;
+  const cEl=document.getElementById("count");
+  cEl.textContent=total+(total===1?" pick":" picks");
+  cEl.classList.toggle("zero",total===0);
+  document.getElementById("footCount").innerHTML="<b>"+total+"</b>";
+  REGIONS.forEach(R=>{
+    const n=OPTIONS.filter(o=>o.r===R.id&&picked.has(o.id)).length;
+    document.querySelectorAll(`[data-rpick="${R.id}"]`).forEach(el=>el.textContent=n);
+    document.querySelectorAll(`[data-rcount="${R.id}"]`).forEach(el=>el.textContent=n);
+  });
+  document.querySelectorAll(".opt").forEach(opt=>{
+    const id=opt.dataset.id, on=picked.has(id);
+    opt.classList.toggle("picked",on);
+    opt.querySelector(".sel").setAttribute("aria-pressed",on);
+    let matchFilter = activeFilter==="All" || (activeFilter==="Must"? opt.dataset.must==="1" : opt.dataset.cat===activeFilter);
+    const matchPicked = !showPickedOnly || on;
+    const show = matchFilter && matchPicked;
+    opt.style.display = show ? "" : "none";
+    if(!show && openId===id) closeDetail();
+  });
+  document.querySelectorAll(".region").forEach(sec=>{
+    let any=false;
+    sec.querySelectorAll(".catgroup").forEach(g=>{
+      const vis=[...g.querySelectorAll(".opt")].some(b=>b.style.display!=="none");
+      g.style.display=vis?"":"none";if(vis)any=true;
+    });
+    sec.querySelector(".empty-region").style.display=any?"none":"block";
+  });
+}
+render();
+
+// export
+function buildExport(){
+  const lines=["OUR KOREA PICKS — Nov 2026","("+picked.size+" selected · ★ = must-see)",""];
+  REGIONS.forEach(R=>{
+    const items=OPTIONS.filter(o=>o.r===R.id&&picked.has(o.id));
+    if(!items.length)return;
+    lines.push(R.en.toUpperCase()+" ("+items.length+")");
+    const byCat={};items.forEach(o=>{(byCat[o.c]=byCat[o.c]||[]).push(o);});
+    Object.keys(byCat).forEach(cat=>{
+      lines.push("  "+cat+":");
+      byCat[cat].forEach(o=>lines.push("   - "+(o.m?"★ ":"")+o.t+"  ["+"$".repeat(o.p)+"]"));
+    });
+    lines.push("");
+  });
+  if(picked.size===0)lines.push("(nothing picked yet — tap some boxes!)");
+  return lines.join("\n");
+}
+const modalBg=document.getElementById("modalBg");
+function openModal(){document.getElementById("exportText").value=buildExport();modalBg.classList.add("open");}
+function closeModal(){modalBg.classList.remove("open");}
+document.getElementById("exportBtn").onclick=openModal;
+document.getElementById("modalClose").onclick=closeModal;
+document.getElementById("closeBtn").onclick=closeModal;
+modalBg.addEventListener("click",e=>{if(e.target===modalBg)closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1600);}
+document.getElementById("copyBtn").onclick=()=>{
+  const ta=document.getElementById("exportText");const text=ta.value;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>toast("Copied — paste it to Claude")).catch(()=>{ta.select();document.execCommand("copy");toast("Copied");});
+  }else{ta.select();document.execCommand("copy");toast("Copied");}
+};
+</script>
+</body>
+</html>
